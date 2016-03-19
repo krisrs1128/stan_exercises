@@ -16,3 +16,6 @@ y <- as.numeric(y)
 stan("linear_regression.stan",
      data = list(N = 100, K = 10, X = X, y = y))
 beta
+
+stan("robust_linear_regression.stan",
+     data = list(N = 100, K = 10, nu = 1, X = X, y = y))
