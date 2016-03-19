@@ -47,6 +47,7 @@ N <- 400
 K <- 3
 p <- 5
 beta <- matnorm(K, p, 1)
+beta[K, ] <- 0
 X <- matnorm(n, p, 1)
 P <- t(apply(X %*% t(beta), 1, softmax))
 for(i in seq_len(n)) {
@@ -54,6 +55,24 @@ for(i in seq_len(n)) {
 }
 
 stan("multiresponse_logit.stan",
+     data = list(n = n, K = K, X = X, y = y),
+     chains = 2)
+beta
+
+# restrict last level to be 0
+stan("multiresponse_logit_ident.stan",
+     data = list(n = n, K = K, X = X, y = y),
+     chains = 2)
+beta
+
+# restrict sum to be zero
+stan("multiresponse_logit_ident_sum.stan",
+     data = list(n = n, K = K, X = X, y = y),
+     chains = 2)
+beta
+
+# use scaled simplex
+stan("multiresponse_logit_ident_simplex.stan",
      data = list(n = n, K = K, X = X, y = y),
      chains = 2)
 beta
