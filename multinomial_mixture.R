@@ -17,11 +17,11 @@ library("ggplot2")
 # Code Block -------------------------------------------------------------------
 
 # generate data
-D <- 500
-K <- 3
-V <- 10
-phi <- matrix(rgamma(K * V, 10), K, V)
-words_per_doc <- 1000
+D <- 50
+K <- 2
+V <- 5
+phi <- matrix(rgamma(K * V, 1), K, V)
+words_per_doc <- 50
 
 for (k in seq_len(K)) {
   phi[k, ] <- phi[k, ] / sum(phi[k, ])
@@ -43,8 +43,8 @@ stan_data <- list(
   V = V,
   D = D,
   n = n,
-  alpha = rep(1, K),
-  beta = rep(1, V)
+  alpha = rep(.01, K),
+  beta = rep(.01, V)
 )
 
 m <- stan_model(file = "multinomial_mixture.stan")
@@ -78,5 +78,3 @@ ggplot(gamma_hat) +
   geom_histogram(aes(x = mean, fill = as.factor(k))) +
   scale_fill_brewer(palette = "Set2") +
   facet_grid(truth ~ .)
-
-samples$gamma[1000,,]
