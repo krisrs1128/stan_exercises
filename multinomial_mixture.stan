@@ -2,8 +2,6 @@ data {
   int<lower=1> K; // num topics
   int<lower=1> V; // num words
   int<lower=0> D; // num docs
-  int<lower=1, upper=K> z[D]; // topic for each doc
-
   int<lower=0> n[D, V]; // word counts for each doc
 
   // hyperparameters
@@ -16,18 +14,25 @@ parameters {
   simplex[V] phi[K]; // word dist for k^th topic
 }
 
-model {
-  theta ~ dirichlet(alpha);
+transformed parameters {
+  real gamma[D, K]; // log doc mixing parameters
 
+  for (d in 1:D) {
+    for (k in 1:K) {
+      gamma[d, k] = categorical_lpmf(k | theta) + multinomial_lpmf(n[d] | phi[k]);
+    }
+  }
+}
+
+model {
+  // priors
+  theta ~ dirichlet(alpha);
   for (k in 1:K) {
     phi[k] ~ dirichlet(beta);
   }
 
+  // likelihood
   for (d in 1:D) {
-    z[d] ~ categorical(theta);
-  }
-
-  for (d in 1:D) {
-    n[d] ~ multinomial(phi[z[d]]);
+    target += log_sum_exp(gamma[d]);
   }
 }

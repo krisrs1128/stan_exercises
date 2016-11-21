@@ -17,11 +17,11 @@ library("ggplot2")
 # Code Block -------------------------------------------------------------------
 
 # generate data
-D <- 1000
+D <- 500
 K <- 3
 V <- 10
 phi <- matrix(rgamma(K * V, 10), K, V)
-words_per_doc <- 100
+words_per_doc <- 1000
 
 for (k in seq_len(K)) {
   phi[k, ] <- phi[k, ] / sum(phi[k, ])
@@ -42,7 +42,6 @@ stan_data <- list(
   K = K,
   V = V,
   D = D,
-  z = z,
   n = n,
   alpha = rep(1, K),
   beta = rep(1, V)
@@ -50,11 +49,10 @@ stan_data <- list(
 
 m <- stan_model(file = "multinomial_mixture.stan")
 n_iter <- 1000
-stan_fit <- vb(m, data = stan_data, output_samples = n_iter)
+stan_fit <- stan(file = "multinomial_mixture.stan", data = stan_data, iter = n_iter)
 
 # get samples
 samples <- extract(stan_fit)
-
 
 # Recovers phi
 samples_phi <- melt(samples$phi)
@@ -65,3 +63,20 @@ phi_hat <- samples_phi %>%
 
 phi
 phi_hat
+
+# recovered cluster memberships
+samples_gamma <- melt(samples$gamma, varnames= c("iteration", "n", "k"))
+samples_gamma$value[!is.finite(samples_gamma$value)] <- NA
+gamma_hat <- samples_gamma %>%
+  group_by(n, k) %>%
+  summarise(mean = mean(value, na.rm = TRUE))
+
+gamma_hat$truth <- z[gamma_hat$n]
+head(gamma_hat)
+
+ggplot(gamma_hat) +
+  geom_histogram(aes(x = mean, fill = as.factor(k))) +
+  scale_fill_brewer(palette = "Set2") +
+  facet_grid(truth ~ .)
+
+samples$gamma[1000,,]
