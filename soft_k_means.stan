@@ -1,4 +1,4 @@
-// copied /* directly from  */http://mc-stan.org/documentation/
+// copied directly from http://mc-stan.org/documentation/
 
 data {
   int<lower=0> N; // number of data points
