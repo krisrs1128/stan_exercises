@@ -36,7 +36,7 @@ stan_data <- list(
   D = D,
   sigma = 0.3,
   eta = 1,
-  rho = 1 
+  rho = 1
 )
 
 stan_fit <- stan("gpr_sim.stan", data = stan_data, chains = 1)
@@ -50,4 +50,3 @@ plot_data <- stan_list$y %>%
 ggplot(plot_data %>% filter(iteration < 10)) +
   geom_point(aes(x = x, y = y)) +
   facet_wrap(~iteration)
-
