@@ -1,4 +1,3 @@
-
 library("rstan")
 
 matnorm <- function(n, p, sigma) {
@@ -22,4 +21,3 @@ ll <- rep(1:5, each = 100)
 
 stan("hierarchical_logit.stan",
      data = list(D = 10, N = 500, L = 5, y = y, ll = ll, x = X))
-                                            
