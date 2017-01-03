@@ -16,8 +16,18 @@ data {
 }
 
 transformed data {
-  int transition_count[K, K];
-  int emission_count[K, V];
+
+  ## Intitialize structures for sufficient statistics
+  int<lower=0> transition_count[K, K];
+  int<lower=0> emission_count[K, V];
+  for (k in 1:K) {
+    for (k_tilde in 1:K) {
+      transition_count[k, k_tilde] = 0;
+    }
+    for (v in 1:V) {
+      emission_count[k, v] = 0;
+    }
+  }
 
   ## Calculate sufficient statistics
   for (t in 1:(T - 1)) {
