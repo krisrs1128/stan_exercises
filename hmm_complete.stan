@@ -11,6 +11,8 @@ data {
   int<lower=1> V;
   int<lower=1, upper=K> z[T];
   int<lower=1, upper=V> w[T];
+  vector<lower=0>[K] alpha;
+  vector<lower=0>[V] beta;
 }
 
 transformed data {
@@ -33,6 +35,11 @@ parameters {
 
 model {
   for (k in 1:K) {
+    // prior probabilities
+    theta[k] ~ dirichlet(alpha);
+    phi[k] ~ dirichlet(beta);
+
+    // exponential families
     transition_count[k] ~ multinomial(theta[k]);
     emission_count[k] ~ multinomial(phi[k]);
   }
