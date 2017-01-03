@@ -7,6 +7,29 @@
 library("rstan")
 library("plyr")
 library("dplyr")
+library("reshape2")
+library("ggplot2")
+
+## ---- themes ----
+scale_colour_discrete <- function(...)
+  scale_colour_brewer(..., palette="Set2")
+scale_fill_discrete <- function(...)
+  scale_fill_brewer(..., palette="Set2")
+
+theme_set(theme_bw())
+min_theme <- theme_update(
+  panel.border = element_blank(),
+  panel.grid = element_blank(),
+  text = element_text(family = "Ubuntu Regular", color = "#22211d"),
+  axis.ticks = element_blank(),
+  legend.title = element_text(size = 8),
+  legend.text = element_text(size = 6),
+  axis.text = element_text(size = 6),
+  axis.title = element_text(size = 8),
+  strip.background = element_blank(),
+  strip.text = element_text(size = 8),
+  legend.key = element_blank()
+)
 
 ## ---- simulate-data ----
 K <- 4
@@ -30,7 +53,7 @@ for (i in seq_len(T - 1)) {
 
 ## simulate words
 for (i in seq_len(T)) {
-  w[i]  <- sample(seq_len(V), size = 1, prob = phi[z[i], ]) 
+  w[i]  <- sample(seq_len(V), size = 1, prob = phi[z[i], ])
 }
 
 ## ---- estimate-parameters ----
@@ -43,4 +66,25 @@ stan_data <- list(
   alpha = rep(1, K),
   beta = rep(1, V)
 )
-stan("hmm_complete.stan", data = stan_data)
+fit <- extract(
+  stan("hmm_complete.stan", data = stan_data)
+)
+
+## ---- analyze results ----
+theta_fit <- melt(
+  as.array(fit$theta),
+  varnames = c("iteration", "start", "end")
+)
+
+phi_fit <- melt(
+  as.array(fit$phi),
+  varnames = c("iteration", "k", "n")
+)
+
+ggplot(theta_fit) +
+  geom_bar(aes(x = end, y = value), stat = "identity") +
+  facet_grid(start ~ .)
+
+ggplot(phi_fit) +
+  geom_bar(aes(x = v, y = value), stat = "identity") +
+  facet_grid(k ~ .)
