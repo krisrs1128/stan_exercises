@@ -5,6 +5,22 @@
  * stan reference, section 9.6
  */
 
+functions {
+  int[,] emissions(int[] z, int[] w, int K, int V, int T) {
+    int count[K, V];
+    for (k in 1:K) {
+      for (v in 1:V) {
+        count[k, v] = 0;
+      }
+    }
+
+    for (t in 1:T) {
+      count[z[t], w[t]] = 1 + count[z[t], w[t]];
+    }
+    return count;
+  }
+}
+
 data {
   int<lower=1> K;
   int<lower=1> T;
@@ -15,6 +31,7 @@ data {
   vector<lower=0>[V] beta;
 }
 
+
 transformed data {
 
   ## Intitialize structures for sufficient statistics
@@ -24,18 +41,13 @@ transformed data {
     for (k_tilde in 1:K) {
       transition_count[k, k_tilde] = 0;
     }
-    for (v in 1:V) {
-      emission_count[k, v] = 0;
-    }
   }
 
   ## Calculate sufficient statistics
   for (t in 1:(T - 1)) {
     transition_count[z[t], z[t + 1]] = 1 + transition_count[z[t], z[t + 1]];
   }
-  for (t in 1:T) {
-    emission_count[z[t], w[t]] = 1 + emission_count[z[t], w[t]];
-  }
+  emission_count = emissions(z, w, K, V, T);
 }
 
 parameters {
