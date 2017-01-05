@@ -6,6 +6,16 @@
  */
 
 functions {
+  /* Calculate emissions sufficient statistics
+   *
+   * @param z The array of underlying states.
+   * @param w The array of words observed at each time.
+   * @param K The number of latent states.
+   * @param V The size of the vocabulary.
+   * @param T The length of the sequence.
+   * @return count The K x V matrix of counts of words associated with each
+   *   state.
+   */
   int[,] emissions(int[] z, int[] w, int K, int V, int T) {
     int count[K, V];
     for (k in 1:K) {
