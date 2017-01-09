@@ -11,6 +11,7 @@ library("dplyr")
 library("reshape2")
 library("ggplot2")
 library("rstan")
+rstan_options(auto_write = TRUE)
 options(mc.cores = parallel::detectCores())
 set.seed(01082017)
 
