@@ -31,7 +31,7 @@ model{
 
   for (i in 1:N) {
     for (j in 1:P) {
-      y[i, j] ~ poisson(theta[i]' * beta[j]')
+      y[i, j] ~ poisson(theta[i]' * beta[j]);
     }
   }
 }
