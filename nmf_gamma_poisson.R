@@ -12,6 +12,7 @@ library("reshape2")
 library("ggplot2")
 library("rstan")
 options(mc.cores = parallel::detectCores())
+set.seed(012017)
 
 scale_colour_discrete <- function(...)
   scale_colour_brewer(..., palette="Set2")
@@ -82,9 +83,22 @@ theta_fit <- melt(
     )
   )
 
+theta_levels <- theta_fit %>%
+  group_by(i, k) %>%
+  summarise(mean = mean(value)) %>%
+  filter(k == 1) %>%
+  arrange(desc(mean)) %>%
+  select(i) %>%
+  unlist()
+
+theta_fit$i <- factor(
+  theta_fit$i,
+  levels = theta_levels
+)
+
 ggplot(
   theta_fit %>%
-  filter(i <= 25)
+  filter(as.numeric(i) <= 25)
 ) +
   geom_histogram(
     aes(x = value, fill = as.factor(k)),
