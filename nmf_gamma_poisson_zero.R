@@ -42,7 +42,8 @@ stan_data <- list(
   a = 1,
   b = 1,
   c = 1,
-  d = 1
+  d = 1,
+  zero_inf_prob = 0.3
 )
 attach(stan_data)
 
@@ -66,13 +67,16 @@ y <- matrix(
 
 ## set some proportion to zero
 mask <- matrix(
-  sample(c(0, 1), N * P, replace = T, prob = c(0.3, 0.7)),
+  sample(
+    c(0, 1),
+    N * P,
+    replace = T,
+    prob = c(stan_data$zero_inf_prob, 1 - stan_data$zero_inf_prob)),
   N, P
 )
 y[mask] <- 0
 
 ## ---- stan-fit ----
-stan_data$mask <- mask
 f <- stan_model("nmf_gamma_poisson_zero.stan")
 fit <- extract(
   vb(f, data = stan_data)

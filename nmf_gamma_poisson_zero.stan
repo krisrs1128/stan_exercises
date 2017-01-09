@@ -9,11 +9,11 @@ data{
   int<lower=0> P;
   int<lower=0> K;
   int<lower=0> y[N, P];
-  int<lower=0, upper=1> mask[N, P];
   real<lower=0> a;
   real<lower=0> b;
   real<lower=0> c;
   real<lower=0> d;
+  real<lower=0, upper=1> zero_inf_prob;
 }
 
 parameters{
@@ -32,8 +32,12 @@ model{
 
   for (i in 1:N) {
     for (j in 1:P) {
-      if (mask[i, j] == 1) {
-        y[i, j] ~ poisson(theta[i]' * beta[j]);
+      if (y[i, j] == 0) {
+        target += log_sum_exp(bernoulli_lpmf(1 | zero_inf_prob),
+                              bernoulli_lpmf(0 | zero_inf_prob) + poisson_lpmf(y[i, j] | theta[i]' * beta[j]));
+
+      } else {
+        target += bernoulli_lpmf(0 | zero_inf_prob) + poisson_lpmf(y[i, j] | theta[i]' * beta[j]);
       }
     }
   }
