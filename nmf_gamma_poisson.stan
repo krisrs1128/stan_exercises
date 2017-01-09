@@ -16,7 +16,7 @@ data{
 }
 
 parameters{
-  positive_ordered[K] theta[N]; // scores
+  vector<lower=0>[K] theta[N]; // scores
   vector<lower=0>[K] beta[P]; // latent factors
 }
 
