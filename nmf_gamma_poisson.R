@@ -16,12 +16,13 @@ library("rstan")
 stan_data <- list(
   K = 2,
   N = 100,
-  p = 10,
+  P = 10,
   a = 1,
   b = 1,
   c = 1,
   d = 1
 )
+attach(stan_data)
 
 ## scores
 theta <- matrix(
@@ -36,4 +37,7 @@ beta <- matrix(
 )
 
 ## observations
-y <- theta %*% t(beta)
+y <- matrix(
+  rpois(N * P, theta %*% t(beta)),
+  N, P
+)
