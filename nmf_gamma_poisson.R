@@ -73,7 +73,14 @@ fit <- extract(
 theta_fit <- melt(
   fit$theta,
   varnames = c("iteration", "i", "k")
-)
+) %>%
+  left_join(
+    melt(
+      theta,
+      varnames = c("i", "k"),
+      value.name = "truth"
+    )
+  )
 
 ggplot(
   theta_fit %>%
@@ -87,5 +94,7 @@ ggplot(
   xlim(0, 6) +
   theme(
     panel.spacing = unit(0, "line")
+  ) +
+  geom_vline(
+    aes(xintercept = truth, col = as.factor(k))
   )
-
