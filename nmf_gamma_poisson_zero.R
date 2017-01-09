@@ -12,7 +12,7 @@ library("reshape2")
 library("ggplot2")
 library("rstan")
 options(mc.cores = parallel::detectCores())
-set.seed(012017)
+set.seed(01082017)
 
 scale_colour_discrete <- function(...)
   scale_colour_brewer(..., palette="Set2")
@@ -38,7 +38,7 @@ min_theme <- theme_update(
 stan_data <- list(
   K = 2,
   N = 100,
-  P = 10,
+  P = 75,
   a = 1,
   b = 1,
   c = 1,
@@ -72,7 +72,8 @@ mask <- matrix(
 y[mask] <- 0
 
 ## ---- stan-fit ----
-f <- stan_model("nmf_gamma_poisson.stan")
+stan_data$mask <- mask
+f <- stan_model("nmf_gamma_poisson_zero.stan")
 fit <- extract(
   vb(f, data = stan_data)
 )
@@ -90,17 +91,9 @@ theta_fit <- melt(
     )
   )
 
-theta_levels <- theta_fit %>%
-  group_by(i, k) %>%
-  summarise(mean = mean(value)) %>%
-  filter(k == 1) %>%
-  arrange(desc(mean)) %>%
-  select(i) %>%
-  unlist()
-
 theta_fit$i <- factor(
   theta_fit$i,
-  levels = theta_levels
+  levels = order(theta[, 1], decreasing = TRUE)
 )
 
 ggplot(
@@ -112,7 +105,7 @@ ggplot(
     bins = 100, alpha = 0.6) +
   coord_flip() +
   facet_grid(. ~ i) +
-  xlim(0, 6) +
+  xlim(0, 7) +
   theme(
     panel.spacing = unit(0, "line")
   ) +
