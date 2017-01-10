@@ -11,6 +11,7 @@ library("dplyr")
 library("reshape2")
 library("ggplot2")
 library("rstan")
+rstan_options(auto_write = TRUE)
 options(mc.cores = parallel::detectCores())
 set.seed(012017)
 
@@ -38,7 +39,7 @@ min_theme <- theme_update(
 stan_data <- list(
   K = 2,
   N = 100,
-  P = 10,
+  P = 75,
   a = 1,
   b = 1,
   c = 1,
@@ -63,6 +64,27 @@ y <- matrix(
   rpois(N * P, theta %*% t(beta)),
   N, P
 )
+
+## ---- overdispersion ----
+yy <- sort(rpois(N * P, mean(y)))
+qq_df <- data.frame(
+  y = c(sort(y), yy),
+  label = c(rep("gamma-poisson", N * P), rep("poisson", N * P))
+)
+
+ggplot(qq_df) +
+  geom_histogram(aes(x = y), binwidth = .5) +
+  facet_grid(label ~ .)
+
+ggplot(data.frame(
+  mu = rowMeans(y),
+  sigma = apply(y, 1, sd)
+)) +
+  geom_point(
+    aes(x = mu, y = sigma)
+  ) +
+  coord_fixed() +
+  geom_abline(slope = 1)
 
 ## ---- stan-fit ----
 f <- stan_model("nmf_gamma_poisson.stan")
