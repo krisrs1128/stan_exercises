@@ -81,6 +81,10 @@ ggplot(qq_df) +
   coord_fixed() +
   guides(col = guide_legend(override.aes = list(size = 3, alpha = 1)))
 
+ggplot(qq_df) +
+  geom_histogram(aes(x = y), binwidth = .5) +
+  facet_grid(label ~ .)
+
 ## ---- stan-fit ----
 f <- stan_model("nmf_gamma_poisson.stan")
 fit <- extract(
