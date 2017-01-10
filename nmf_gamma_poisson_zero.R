@@ -94,6 +94,16 @@ fit <- extract(
   vb(f, data = stan_data)
 )
 
+ ggplot(data.frame(
+   mu = rowMeans(y),
+   sigma = apply(y, 1, sd)
+ )) +
+   geom_point(
+     aes(x = mu, y = sigma)
+   ) +
+   coord_fixed() +
+   geom_abline(slope = 1)
+
 ## ---- examine ----
 theta_fit <- melt(
   fit$theta,

@@ -76,6 +76,16 @@ ggplot(qq_df) +
   geom_histogram(aes(x = y), binwidth = .5) +
   facet_grid(label ~ .)
 
+ggplot(data.frame(
+  mu = rowMeans(y),
+  sigma = apply(y, 1, sd)
+)) +
+  geom_point(
+    aes(x = mu, y = sigma)
+  ) +
+  coord_fixed() +
+  geom_abline(slope = 1)
+
 ## ---- stan-fit ----
 f <- stan_model("nmf_gamma_poisson.stan")
 fit <- extract(
