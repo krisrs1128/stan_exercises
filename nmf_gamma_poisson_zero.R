@@ -44,7 +44,7 @@ stan_data <- list(
   b = 1,
   c = 1,
   d = 1,
-  zero_inf_prob = 0.3
+  zero_inf_prob = 0.8
 )
 attach(stan_data)
 
@@ -76,6 +76,17 @@ mask <- matrix(
   N, P
 )
 y[mask] <- 0
+
+## ---- overdispersion ----
+yy <- sort(rpois(N * P, mean(y)))
+qq_df <- data.frame(
+  y = c(sort(y), yy),
+  label = c(rep("zinf-gamma-poisson", N * P), rep("poisson", N * P))
+)
+
+ggplot(qq_df) +
+  geom_histogram(aes(x = y), binwidth = .5) +
+  facet_grid(label ~ .)
 
 ## ---- stan-fit ----
 f <- stan_model("nmf_gamma_poisson_zero.stan")

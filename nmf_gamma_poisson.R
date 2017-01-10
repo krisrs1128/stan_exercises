@@ -66,20 +66,11 @@ y <- matrix(
 )
 
 ## ---- overdispersion ----
-qq <- sort(rpois(N * P, mean(y)))
 yy <- sort(rpois(N * P, mean(y)))
-
 qq_df <- data.frame(
-  y = c(sort(y), yy), 
-  label = c(rep("gamma-poisson", N * P), rep("poisson", N * P)),
-  qq = c(qq, qq)
+  y = c(sort(y), yy),
+  label = c(rep("gamma-poisson", N * P), rep("poisson", N * P))
 )
-
-ggplot(qq_df) +
-  geom_jitter(aes(x = qq, y = y, col = label),
-              alpha = 0.1, size = .5) +
-  coord_fixed() +
-  guides(col = guide_legend(override.aes = list(size = 3, alpha = 1)))
 
 ggplot(qq_df) +
   geom_histogram(aes(x = y), binwidth = .5) +
