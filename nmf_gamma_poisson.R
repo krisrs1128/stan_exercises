@@ -86,6 +86,19 @@ ggplot(data.frame(
   coord_fixed() +
   geom_abline(slope = 1)
 
+## ---- heatmap ----
+m_y <- melt(
+  y,
+  varnames = c("N", "V"),
+  value.name = "y"
+)
+
+m_y$N <- factor(m_y$N, levels = sample_order)
+m_y$V <- factor(m_y$V, levels = order(beta[, 1]))
+
+ggplot(m_y) +
+  geom_tile(aes(x = V, y = N, fill = y))
+
 ## ---- stan-fit ----
 f <- stan_model("nmf_gamma_poisson.stan")
 fit <- extract(
