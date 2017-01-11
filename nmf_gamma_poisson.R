@@ -19,6 +19,8 @@ scale_colour_discrete <- function(...)
   scale_colour_brewer(..., palette="Set2")
 scale_fill_discrete <- function(...)
   scale_fill_brewer(..., palette="Set2")
+scale_fill_continuous <- function(...)
+  scale_fill_gradient(low = "white", high = "#C36395")
 
 theme_set(theme_bw())
 min_theme <- theme_update(
