@@ -65,6 +65,16 @@ y <- matrix(
   N, P
 )
 
+## ---- pca ----
+compare_data <- data.frame(
+  theta,
+  princomp(scale(y))$scores
+)
+
+ggplot(compare_data) +
+  geom_point(aes(x = Comp.1, Comp.2, size = X1, col = X2))
+
+
 ## ---- overdispersion ----
 yy <- sort(rpois(N * P, mean(y)))
 qq_df <- data.frame(
@@ -85,19 +95,6 @@ ggplot(data.frame(
   ) +
   coord_fixed() +
   geom_abline(slope = 1)
-
-## ---- heatmap ----
-m_y <- melt(
-  y,
-  varnames = c("N", "V"),
-  value.name = "y"
-)
-
-m_y$N <- factor(m_y$N, levels = sample_order)
-m_y$V <- factor(m_y$V, levels = order(beta[, 1]))
-
-ggplot(m_y) +
-  geom_tile(aes(x = V, y = N, fill = y))
 
 ## ---- stan-fit ----
 f <- stan_model("nmf_gamma_poisson.stan")
