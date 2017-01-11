@@ -77,6 +77,17 @@ mask <- matrix(
 )
 y[mask] <- 0
 
+## ---- heatmap ----
+
+ ## ---- pca ----
+compare_data <- data.frame(
+  theta,
+  princomp(scale(y))$scores
+)
+
+ggplot(compare_data) +
+  geom_point(aes(x = Comp.1, Comp.2, size = X1, col = X2))
+
 ## ---- overdispersion ----
 yy <- sort(rpois(N * P, mean(y)))
 qq_df <- data.frame(
@@ -89,20 +100,19 @@ ggplot(qq_df) +
   facet_grid(label ~ .)
 
 ## ---- stan-fit ----
-f <- stan_model("nmf_gamma_poisson_zero.stan")
 fit <- extract(
-  vb(f, data = stan_data)
+  stan(file = "nmf_gamma_poisson_zero.stan", data = stan_data, chains = 1)
 )
 
- ggplot(data.frame(
-   mu = rowMeans(y),
-   sigma = apply(y, 1, sd)
- )) +
-   geom_point(
-     aes(x = mu, y = sigma)
-   ) +
-   coord_fixed() +
-   geom_abline(slope = 1)
+ggplot(data.frame(
+  mu = rowMeans(y),
+  sigma = apply(y, 1, sd)
+)) +
+  geom_point(
+    aes(x = mu, y = sigma)
+  ) +
+  coord_fixed() +
+  geom_abline(slope = 1)
 
 ## ---- examine ----
 theta_fit <- melt(
@@ -122,19 +132,33 @@ theta_fit$i <- factor(
   levels = order(theta[, 1], decreasing = TRUE)
 )
 
-ggplot(
-  theta_fit %>%
-  filter(as.numeric(i) <= 25)
-) +
-  geom_histogram(
-    aes(x = value, fill = as.factor(k)),
-    bins = 100, alpha = 0.6) +
-  coord_flip() +
-  facet_grid(. ~ i) +
-  xlim(0, 7) +
-  theme(
-    panel.spacing = unit(0, "line")
+theta_fit_cast <- theta_fit %>%
+  data.table::setDT() %>%
+  data.table::dcast(i + iteration ~ k, value.var = c("value", "truth"))
+
+p <- ggplot() +
+  geom_text(
+    data = theta_fit_cast,
+    aes(x = value_1, y = value_2, label = i),
+    size = 2, alpha = 0.1, col = "#5E5E5E"
   ) +
-  geom_vline(
-    aes(xintercept = truth, col = as.factor(k))
+  geom_text(
+    data = theta_fit_cast %>% filter(iteration == 1),
+    aes(x = truth_1, y = truth_2, label = i),
+    size = 5, alpha = 1, col = "#d95f02"
+  ) +
+  theme(
+    axis.text = element_blank(),
+    panel.spacing = unit(0, "line")
   )
+p
+
+## ---- faceted-thetas ----
+p +
+  facet_wrap(~i) +
+  theme(
+    axis.text = element_blank(),
+    panel.spacing = unit(0, "line"),
+    strip.text= element_blank(),
+    panel.border = element_rect(fill = "transparent", size = .2)
+   )
