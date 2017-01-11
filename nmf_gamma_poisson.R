@@ -182,7 +182,7 @@ beta_fit_cast <- beta_fit %>%
   data.table::setDT() %>%
   data.table::dcast(v + iteration ~ k, value.var = c("value", "truth"))
 
-ggplot() +
+p <- ggplot() +
   geom_text(
     data = beta_fit_cast,
     aes(x = value_1, y = value_2, label = v),
@@ -196,4 +196,13 @@ ggplot() +
   theme(
     axis.text = element_blank(),
     panel.spacing = unit(0, "line")
+  )
+
+## ---- beta-facet ----
+p +
+  theme(
+    axis.text = element_blank(),
+    panel.spacing = unit(0, "line"),
+    strip.text= element_blank(),
+    panel.border = element_rect(fill = "transparent", size = .2)
   )

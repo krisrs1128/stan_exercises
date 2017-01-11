@@ -209,3 +209,12 @@ ggplot() +
     axis.text = element_blank(),
     panel.spacing = unit(0, "line")
   )
+
+## ---- beta-facet ----
+p +
+  theme(
+    axis.text = element_blank(),
+    panel.spacing = unit(0, "line"),
+    strip.text= element_blank(),
+    panel.border = element_rect(fill = "transparent", size = .2)
+  )
