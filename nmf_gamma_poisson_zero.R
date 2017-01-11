@@ -78,8 +78,14 @@ mask <- matrix(
 y[mask] <- 0
 
 ## ---- heatmap ----
+y_df <- melt(y)
+y_df$Var1 <- factor(y_df$Var1, levels = order(theta[, 1]))
+y_df$Var2 <- factor(y_df$Var2, levels = order(theta[, 1]))
+ggplot(y_df) +
+  geom_tile(aes(x = Var1, y = Var2, fill = y)) +
+  scale_fill_gradient(low = "#438E98", high = "#C36395")
 
- ## ---- pca ----
+## ---- pca ----
 compare_data <- data.frame(
   theta,
   princomp(scale(y))$scores
@@ -103,6 +109,7 @@ ggplot(qq_df) +
 fit <- extract(
   stan(file = "nmf_gamma_poisson_zero.stan", data = stan_data, chains = 1)
 )
+save(fit, file = "nmf_zero.rda")
 
 ggplot(data.frame(
   mu = rowMeans(y),
