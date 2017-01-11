@@ -96,7 +96,6 @@ ggplot(data.frame(
   geom_abline(slope = 1)
 
 ## ---- stan-fit ----
-#f <- stan_model("nmf_gamma_poisson.stan")
 fit <- extract(
   stan(file = "nmf_gamma_poisson.stan", data = stan_data, chains = 1)
 )
@@ -114,17 +113,9 @@ theta_fit <- melt(
     )
   )
 
-theta_levels <- theta_fit %>%
-  group_by(i, k) %>%
-  summarise(mean = mean(value)) %>%
-  filter(k == 1) %>%
-  arrange(desc(mean)) %>%
-  select(i) %>%
-  unlist()
-
 theta_fit$i <- factor(
   theta_fit$i,
-  levels = theta_levels
+  levels = order(theta[, 1])
 )
 
 theta_fit_cast <- theta_fit %>%
@@ -165,3 +156,7 @@ ggplot() +
     strip.text= element_blank(),
     panel.border = element_rect(fill = "transparent", size = .2)
   )
+
+## ---- plot-beta ----
+head(beta)
+head()
