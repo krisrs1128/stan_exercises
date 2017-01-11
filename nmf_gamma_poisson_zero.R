@@ -80,7 +80,7 @@ y[mask == 1] <- 0
 ## ---- heatmap ----
 y_df <- melt(y)
 y_df$Var1 <- factor(y_df$Var1, levels = order(theta[, 1]))
-y_df$Var2 <- factor(y_df$Var2, levels = order(theta[, 2]))
+y_df$Var2 <- factor(y_df$Var2, levels = order(beta[, 1]))
 ggplot(y_df) +
   geom_tile(aes(x = Var1, y = Var2, fill = value)) +
   scale_fill_gradient(low = "white", high = "#C36395")

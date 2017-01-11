@@ -68,10 +68,10 @@ y <- matrix(
 ## ---- heatmap ----
 y_df <- melt(y)
 y_df$Var1 <- factor(y_df$Var1, levels = order(theta[, 1]))
-y_df$Var2 <- factor(y_df$Var2, levels = order(theta[, 2]))
+y_df$Var2 <- factor(y_df$Var2, levels = order(beta[, 1]))
 ggplot(y_df) +
   geom_tile(aes(x = Var1, y = Var2, fill = value)) +
-  scale_fill_gradient(low = "#438E98", high = "#C36395")
+  scale_fill_gradient(low = "white", high = "#C36395")
 
 ## ---- pca ----
 compare_data <- data.frame(
@@ -107,6 +107,7 @@ ggplot(data.frame(
 fit <- extract(
   stan(file = "nmf_gamma_poisson.stan", data = stan_data, chains = 1)
 )
+save(fit, file = "nmf.rda")
 
 ## ---- examine ----
 theta_fit <- melt(
