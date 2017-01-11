@@ -75,7 +75,7 @@ mask <- matrix(
     prob = c(stan_data$zero_inf_prob, 1 - stan_data$zero_inf_prob)),
   N, P
 )
-y[mask] <- 0
+y[mask == 1] <- 0
 
 ## ---- heatmap ----
 y_df <- melt(y)
@@ -83,7 +83,7 @@ y_df$Var1 <- factor(y_df$Var1, levels = order(theta[, 1]))
 y_df$Var2 <- factor(y_df$Var2, levels = order(theta[, 2]))
 ggplot(y_df) +
   geom_tile(aes(x = Var1, y = Var2, fill = value)) +
-  scale_fill_gradient(low = "#438E98", high = "#C36395")
+  scale_fill_gradient(low = "white", high = "#C36395")
 
 ## ---- pca ----
 compare_data <- data.frame(
@@ -146,7 +146,7 @@ theta_fit_cast <- theta_fit %>%
 p <- ggplot() +
   geom_text(
     data = theta_fit_cast,
-    aes(x = value_1, y = value_2, label = i),
+    aes(x = value_2, y = value_1, label = i),
     size = 2, alpha = 0.1, col = "#5E5E5E"
   ) +
   geom_text(
@@ -169,3 +169,41 @@ p +
     strip.text= element_blank(),
     panel.border = element_rect(fill = "transparent", size = .2)
    )
+
+## ---- plot-beta ----
+beta_fit <- melt(
+  fit$beta,
+  varnames = c("iteration", "v", "k")
+) %>%
+  left_join(
+    melt(
+      beta,
+      varnames = c("v", "k"),
+      value.name = "truth"
+    )
+  )
+
+beta_fit$i <- factor(
+  beta_fit$i,
+  levels = order(beta[, 1])
+)
+
+beta_fit_cast <- beta_fit %>%
+  data.table::setDT() %>%
+  data.table::dcast(v + iteration ~ k, value.var = c("value", "truth"))
+
+ggplot() +
+  geom_text(
+    data = beta_fit_cast,
+    aes(x = value_1, y = value_2, label = v),
+    size = 2, alpha = 0.1, col = "#5E5E5E"
+  ) +
+  geom_text(
+    data = beta_fit_cast %>% filter(iteration == 1),
+    aes(x = truth_1, y = truth_2, label = v),
+    size = 5, alpha = 1, col = "#d95f02"
+  ) +
+  theme(
+    axis.text = element_blank(),
+    panel.spacing = unit(0, "line")
+  )
