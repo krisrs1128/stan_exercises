@@ -158,5 +158,39 @@ ggplot() +
   )
 
 ## ---- plot-beta ----
-head(beta)
-head()
+beta_fit <- melt(
+  fit$beta,
+  varnames = c("iteration", "v", "k")
+) %>%
+  left_join(
+    melt(
+      beta,
+      varnames = c("v", "k"),
+      value.name = "truth"
+    )
+  )
+
+beta_fit$i <- factor(
+  beta_fit$i,
+  levels = order(beta[, 1])
+)
+
+beta_fit_cast <- beta_fit %>%
+  data.table::setDT() %>%
+  data.table::dcast(v + iteration ~ k, value.var = c("value", "truth"))
+
+ggplot() +
+  geom_text(
+    data = beta_fit_cast,
+    aes(x = value_1, y = value_2, label = v),
+    size = 2, alpha = 0.1, col = "#5E5E5E"
+  ) +
+  geom_text(
+    data = beta_fit_cast %>% filter(iteration == 1),
+    aes(x = truth_1, y = truth_2, label = v),
+    size = 5, alpha = 1, col = "#d95f02"
+  ) +
+  theme(
+    axis.text = element_blank(),
+    panel.spacing = unit(0, "line")
+  )
