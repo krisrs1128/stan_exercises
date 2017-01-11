@@ -122,7 +122,7 @@ theta_fit_cast <- theta_fit %>%
   data.table::setDT() %>%
   data.table::dcast(i + iteration ~ k, value.var = c("value", "truth"))
 
-ggplot() +
+p <- ggplot() +
   geom_text(
     data = theta_fit_cast,
     aes(x = value_1, y = value_2, label = i),
@@ -137,18 +137,10 @@ ggplot() +
     axis.text = element_blank(),
     panel.spacing = unit(0, "line")
   )
+p
 
-ggplot() +
-  geom_text(
-    data = theta_fit_cast,
-    aes(x = value_1, y = value_2, label = i),
-    size = 2, alpha = 0.1, col = "#5E5E5E"
-  ) +
-  geom_text(
-    data = theta_fit_cast %>% filter(iteration == 1),
-    aes(x = truth_1, y = truth_2, label = i),
-    size = 5, alpha = 1, col = "#d95f02"
-  ) +
+## ---- faceted-thetas ----
+p +
   facet_wrap(~i) +
   theme(
     axis.text = element_blank(),
