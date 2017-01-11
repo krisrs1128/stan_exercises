@@ -13,7 +13,7 @@ library("ggplot2")
 library("rstan")
 rstan_options(auto_write = TRUE)
 options(mc.cores = parallel::detectCores())
-set.seed(012017)
+set.seed(01112017)
 
 scale_colour_discrete <- function(...)
   scale_colour_brewer(..., palette="Set2")
@@ -73,7 +73,6 @@ compare_data <- data.frame(
 
 ggplot(compare_data) +
   geom_point(aes(x = Comp.1, Comp.2, size = X1, col = X2))
-
 
 ## ---- overdispersion ----
 yy <- sort(rpois(N * P, mean(y)))
@@ -143,4 +142,43 @@ ggplot(
   ) +
   geom_vline(
     aes(xintercept = truth, col = as.factor(k))
+  )
+
+theta_fit_cast <- theta_fit %>%
+  data.table::setDT() %>%
+  data.table::dcast(i + iteration ~ k, value.var = c("value", "truth"))
+
+ggplot() +
+  geom_text(
+    data = theta_fit_cast %>% filter(iteration > 100),
+    aes(x = value_1, y = value_2, label = i),
+    size = 2, alpha = 0.1, col = "#5E5E5E"
+  ) +
+  geom_text(
+    data = theta_fit_cast %>% filter(iteration == 1),
+    aes(x = truth_1, y = truth_2, label = i),
+    size = 5, alpha = 1, col = "#d95f02"
+  ) +
+  theme(
+    axis.text = element_blank(),
+    panel.spacing = unit(0, "line")
+  )
+
+ggplot() +
+  geom_text(
+    data = theta_fit_cast %>% filter(iteration > 100),
+    aes(x = value_1, y = value_2, label = i),
+    size = 2, alpha = 0.1, col = "#5E5E5E"
+  ) +
+  geom_text(
+    data = theta_fit_cast %>% filter(iteration == 1),
+    aes(x = truth_1, y = truth_2, label = i),
+    size = 5, alpha = 1, col = "#d95f02"
+  ) +
+  facet_wrap(~i) +
+  theme(
+    axis.text = element_blank(),
+    panel.spacing = unit(0, "line"),
+    strip.text= element_blank(),
+    panel.border = element_rect(fill = "transparent", size = .2)
   )
