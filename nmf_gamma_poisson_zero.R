@@ -19,6 +19,8 @@ scale_colour_discrete <- function(...)
   scale_colour_brewer(..., palette="Set2")
 scale_fill_discrete <- function(...)
   scale_fill_brewer(..., palette="Set2")
+scale_fill_continuous <- function(...)
+  scale_fill_gradient(low = "white", high = "#C36395")
 
 theme_set(theme_bw())
 min_theme <- theme_update(
@@ -75,7 +77,24 @@ mask <- matrix(
     prob = c(stan_data$zero_inf_prob, 1 - stan_data$zero_inf_prob)),
   N, P
 )
-y[mask] <- 0
+y[mask == 1] <- 0
+
+## ---- heatmap ----
+y_df <- melt(y)
+y_df$Var1 <- factor(y_df$Var1, levels = order(theta[, 1]))
+y_df$Var2 <- factor(y_df$Var2, levels = order(beta[, 1]))
+ggplot(y_df) +
+  geom_tile(aes(x = Var1, y = Var2, fill = value)) +
+  scale_fill_gradient(low = "white", high = "#C36395")
+
+## ---- pca ----
+compare_data <- data.frame(
+  theta,
+  princomp(scale(y))$scores
+)
+
+ggplot(compare_data) +
+  geom_point(aes(x = Comp.1, Comp.2, size = X1, col = X2))
 
 ## ---- overdispersion ----
 yy <- sort(rpois(N * P, mean(y)))
@@ -89,20 +108,20 @@ ggplot(qq_df) +
   facet_grid(label ~ .)
 
 ## ---- stan-fit ----
-f <- stan_model("nmf_gamma_poisson_zero.stan")
 fit <- extract(
-  vb(f, data = stan_data)
+  stan(file = "nmf_gamma_poisson_zero.stan", data = stan_data, chains = 1)
 )
+save(fit, file = "nmf_zero.rda")
 
- ggplot(data.frame(
-   mu = rowMeans(y),
-   sigma = apply(y, 1, sd)
- )) +
-   geom_point(
-     aes(x = mu, y = sigma)
-   ) +
-   coord_fixed() +
-   geom_abline(slope = 1)
+ggplot(data.frame(
+  mu = rowMeans(y),
+  sigma = apply(y, 1, sd)
+)) +
+  geom_point(
+    aes(x = mu, y = sigma)
+  ) +
+  coord_fixed() +
+  geom_abline(slope = 1)
 
 ## ---- examine ----
 theta_fit <- melt(
@@ -122,19 +141,71 @@ theta_fit$i <- factor(
   levels = order(theta[, 1], decreasing = TRUE)
 )
 
-ggplot(
-  theta_fit %>%
-  filter(as.numeric(i) <= 25)
-) +
-  geom_histogram(
-    aes(x = value, fill = as.factor(k)),
-    bins = 100, alpha = 0.6) +
-  coord_flip() +
-  facet_grid(. ~ i) +
-  xlim(0, 7) +
-  theme(
-    panel.spacing = unit(0, "line")
+theta_fit_cast <- theta_fit %>%
+  data.table::setDT() %>%
+  data.table::dcast(i + iteration ~ k, value.var = c("value", "truth"))
+
+p <- ggplot() +
+  geom_text(
+    data = theta_fit_cast,
+    aes(x = value_2, y = value_1, label = i),
+    size = 2, alpha = 0.1, col = "#5E5E5E"
   ) +
-  geom_vline(
-    aes(xintercept = truth, col = as.factor(k))
+  geom_text(
+    data = theta_fit_cast %>% filter(iteration == 1),
+    aes(x = truth_1, y = truth_2, label = i),
+    size = 5, alpha = 1, col = "#d95f02"
+  ) +
+  theme(
+    axis.text = element_blank(),
+    panel.spacing = unit(0, "line")
+  )
+p
+
+## ---- faceted-thetas ----
+p +
+  facet_wrap(~i) +
+  theme(
+    axis.text = element_blank(),
+    panel.spacing = unit(0, "line"),
+    strip.text= element_blank(),
+    panel.border = element_rect(fill = "transparent", size = .2)
+   )
+
+## ---- plot-beta ----
+beta_fit <- melt(
+  fit$beta,
+  varnames = c("iteration", "v", "k")
+) %>%
+  left_join(
+    melt(
+      beta,
+      varnames = c("v", "k"),
+      value.name = "truth"
+    )
+  )
+
+beta_fit$i <- factor(
+  beta_fit$i,
+  levels = order(beta[, 1])
+)
+
+beta_fit_cast <- beta_fit %>%
+  data.table::setDT() %>%
+  data.table::dcast(v + iteration ~ k, value.var = c("value", "truth"))
+
+ggplot() +
+  geom_text(
+    data = beta_fit_cast,
+    aes(x = value_1, y = value_2, label = v),
+    size = 2, alpha = 0.1, col = "#5E5E5E"
+  ) +
+  geom_text(
+    data = beta_fit_cast %>% filter(iteration == 1),
+    aes(x = truth_1, y = truth_2, label = v),
+    size = 5, alpha = 1, col = "#d95f02"
+  ) +
+  theme(
+    axis.text = element_blank(),
+    panel.spacing = unit(0, "line")
   )
