@@ -146,20 +146,33 @@ theta_fit_cast <- theta_fit %>%
   data.table::dcast(i + iteration ~ k, value.var = c("value", "truth"))
 
 p <- ggplot() +
-  geom_text(
+  stat_density2d(
     data = theta_fit_cast,
-    aes(x = value_2, y = value_1, label = i),
-    size = 2, alpha = 0.1, col = "#5E5E5E"
+    aes(x = value_1, y = value_2, group = as.factor(i), fill = log(..level..)),
+    geom = "polygon", alpha = 0.05, h = 0.4, bins = 40
+  ) +
+  geom_text(
+    data = theta_fit_cast %>%
+      group_by(i) %>%
+      summarise(mean_1 = mean(value_1), mean_2 = mean(value_2)),
+    aes(x = mean_1, y = mean_2, label = i),
+    col = "#e34a33",
+    size = 1.3
   ) +
   geom_text(
     data = theta_fit_cast %>% filter(iteration == 1),
     aes(x = truth_1, y = truth_2, label = i),
-    size = 5, alpha = 1, col = "#d95f02"
+    size = 1.3
   ) +
+  xlim(0, 6) +
+  ylim(0, 8) +
+  guides(fill = guide_legend(keywidth = 0.4, keyheight = 0.8, override.aes = list(alpha = 1))) +
   theme(
     axis.text = element_blank(),
     panel.spacing = unit(0, "line")
-  )
+  ) +
+  coord_fixed() +
+  scale_fill_gradientn(colours = viridis(256, option = "D"), breaks = -3:0)
 p
 
 ## ---- faceted-thetas ----
@@ -194,21 +207,35 @@ beta_fit_cast <- beta_fit %>%
   data.table::setDT() %>%
   data.table::dcast(v + iteration ~ k, value.var = c("value", "truth"))
 
-ggplot() +
-  geom_text(
+p <- ggplot() +
+  stat_density2d(
     data = beta_fit_cast,
-    aes(x = value_1, y = value_2, label = v),
-    size = 2, alpha = 0.1, col = "#5E5E5E"
+    aes(x = value_2, y = value_1, group = as.factor(v), fill = log(..level..)),
+    geom = "polygon", alpha = 0.05, h = 0.4, bins = 40
+  ) +
+  geom_text(
+    data = beta_fit_cast %>%
+      group_by(v) %>%
+      summarise(mean_1 = mean(value_2), mean_2 = mean(value_1)),
+    aes(x = mean_1, y = mean_2, label = v),
+    col = "#e34a33",
+    size = 1.3
   ) +
   geom_text(
     data = beta_fit_cast %>% filter(iteration == 1),
     aes(x = truth_1, y = truth_2, label = v),
-    size = 5, alpha = 1, col = "#d95f02"
+    size = 1.3
   ) +
+  xlim(0, 6.5) +
+  ylim(0, 7) +
+  guides(fill = guide_legend(keywidth = 0.4, keyheight = 0.8, override.aes = list(alpha = 1))) +
   theme(
     axis.text = element_blank(),
     panel.spacing = unit(0, "line")
-  )
+  ) +
+  coord_fixed() +
+  scale_fill_gradientn(colours = viridis(256, option = "D"), breaks = -3:0)
+p
 
 ## ---- beta-facet ----
 p +
