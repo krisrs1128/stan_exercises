@@ -84,6 +84,11 @@ reshape_samples <- function(samples, truth, dims) {
   )
 }
 
+#' Merge Default NMF options
+#'
+#' @param opts [list] A partially filled list of options, to fill in with
+#'   defaults.
+#' @return opts [list] The version of opts with defaults filled in.
 merge_nmf_opts <- function(opts = list()) {
   default_opts <- list(
     "K" = 2,
@@ -103,10 +108,47 @@ merge_nmf_opts <- function(opts = list()) {
 #' To facilitate simulation across many parameters, it's useful to have a single
 #' function to generate all the quantities of interest.
 #'
-#' @param sim_opts [list] A list containing parameters for simulation. Any
-#'   options that are not specified will be filled in with defaults, according
-#'   to merge_nmf_defaults().
+#' @param opts [list] A list containing parameters for simulation. Any options
+#'   that are not specified will be filled in with defaults, according to
+#'   merge_nmf_defaults().
 #' @return A list with the latent thetas, betas, mask, and observed Y.
-nmf_sim <- function(sim_opts) {
+nmf_sim <- function(opts) {
   opts <- merge_nmf_opts(opts)
+  attach(opts, warn.conflicts = FALSE)
+
+  ## scores
+  theta <- matrix(
+    rgamma(N * K, rate = a, shape = b),
+    N, K
+  )
+
+  ## factors
+  beta <- matrix(
+    rgamma(P * K, rate = c, shape = d),
+    P, K
+  )
+
+  ## observations
+  y <- matrix(
+    rpois(N * P, theta %*% t(beta)),
+    N, P
+  )
+
+  ## set some proportion to zero
+  mask <- matrix(
+    sample(
+      c(0, 1),
+      N * P,
+      replace = T,
+      prob = c(zero_inf_prob, 1 - zero_inf_prob)),
+    N, P
+  )
+  y[mask == 1] <- 0
+
+  list(
+    "theta" = theta,
+    "beta" = beta,
+    "mask" = mask,
+    "y" = y
+  )
 }
