@@ -8,6 +8,7 @@
 ## ---- libraries ----
 library("plyr")
 library("dplyr")
+library("data.table")
 library("reshape2")
 library("ggplot2")
 library("rstan")
@@ -132,27 +133,32 @@ scores_contours <- function(plot_data, plot_opts) {
   list("grouped" = p1, "coordinates" = p2)
 }
 
-## ---- examine ----
-theta_fit <- melt(
-  fit$theta,
-  varnames = c("iteration", "i", "k")
-) %>%
-  left_join(
-    melt(
-      theta,
-      varnames = c("i", "k"),
-      value.name = "truth"
+reshape_samples <- function(samples, truth, dims) {
+  reshaped <- samples %>%
+    melt(varnames = c("iteration", dims)) %>%
+    left_join(
+      melt(
+        truth,
+        varnames = dims,
+        value.name = "truth"
+      )
     )
+
+  reshaped[, dims[1]] <- factor(
+    reshaped[, dims[1]],
+    order(truth[, 1])
   )
 
-theta_fit$i <- factor(
-  theta_fit$i,
-  levels = order(theta[, 1])
-)
+  reshaped %>%
+    setDT() %>%
+    dcast(
+      sprintf("%s + iteration ~ %s", dims[1], dims[2]),
+      value.var = c("value", "truth")
+  )
+}
 
-theta_fit_cast <- theta_fit %>%
-  data.table::setDT() %>%
-  data.table::dcast(i + iteration ~ k, value.var = c("value", "truth"))
+## ---- examine ----
+theta_fit <- reshape_samples(fit$theta, theta, c("i", "k"))
 
 plot_opts <- list(
   "x" = "value_1",
@@ -169,30 +175,12 @@ plot_opts <- list(
   "panel_border" = 0.2
 )
 
-scores_contours(theta_fit_cast, plot_opts)
+theta_plots <- scores_contours(theta_fit, plot_opts)
+theta_plots$grouped
 
 ## ---- plot-beta ----
-beta_fit <- melt(
-  fit$beta,
-  varnames = c("iteration", "v", "k")
-) %>%
-  left_join(
-    melt(
-      beta,
-      varnames = c("v", "k"),
-      value.name = "truth"
-    )
-  )
-
-beta_fit$i <- factor(
-  beta_fit$i,
-  levels = order(beta[, 1])
-)
-
-beta_fit_cast <- beta_fit %>%
-  data.table::setDT() %>%
-  data.table::dcast(v + iteration ~ k, value.var = c("value", "truth"))
+beta_fit <- reshape_samples(fit$beta, beta, c("v", "k"))
 
 plot_opts$group <- "v"
-beta_plots <- scores_contours(beta_fit_cast, plot_opts)
+beta_plots <- scores_contours(beta_fit, plot_opts)
 beta_plots$grouped
