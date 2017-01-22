@@ -113,124 +113,29 @@ fit <- extract(
 save(fit, file = "nmf_zero.rda")
 
 ## ---- examine ----
-theta_fit <- melt(
-  fit$theta,
-  varnames = c("iteration", "i", "k")
-) %>%
-  left_join(
-    melt(
-      theta,
-      varnames = c("i", "k"),
-      value.name = "truth"
-    )
-  )
+theta_fit <- reshape_samples(fit$theta, theta, c("i", "k"))
 
-theta_fit$i <- factor(
-  theta_fit$i,
-  levels = order(theta[, 1], decreasing = TRUE)
+plot_opts <- list(
+  "x" = "value_1",
+  "y" = "value_2",
+  "fill" = "log(..level..)",
+  "fill_type" = "gradient",
+  "group" = "i",
+  "alpha" = 0.05,
+  "h" = 0.3,
+  "mean_col" = "#e34a33",
+  "x_lim" = c(0, 6),
+  "y_lim" = c(0, 8),
+  "text_size" = 2,
+  "panel_border" = 0.2
 )
 
-theta_fit_cast <- theta_fit %>%
-  data.table::setDT() %>%
-  data.table::dcast(i + iteration ~ k, value.var = c("value", "truth"))
-
-p <- ggplot() +
-  stat_density2d(
-    data = theta_fit_cast,
-    aes(x = value_1, y = value_2, group = as.factor(i), fill = log(..level..)),
-    geom = "polygon", alpha = 0.05, h = 0.4, bins = 40
-  ) +
-  geom_text(
-    data = theta_fit_cast %>%
-      group_by(i) %>%
-      summarise(mean_1 = mean(value_1), mean_2 = mean(value_2)),
-    aes(x = mean_1, y = mean_2, label = i),
-    col = "#e34a33",
-    size = 1.3
-  ) +
-  geom_text(
-    data = theta_fit_cast %>% filter(iteration == 1),
-    aes(x = truth_1, y = truth_2, label = i),
-    size = 1.3
-  ) +
-  xlim(0, 6) +
-  ylim(0, 8) +
-  guides(fill = guide_legend(keywidth = 0.4, keyheight = 0.8, override.aes = list(alpha = 1))) +
-  theme(
-    axis.text = element_blank(),
-    panel.spacing = unit(0, "line")
-  ) +
-  coord_fixed() +
-  scale_fill_gradientn(colours = viridis(256, option = "D"), breaks = -3:0)
-p
-
-## ---- faceted-thetas ----
-p +
-  facet_wrap(~i) +
-  theme(
-    axis.text = element_blank(),
-    panel.spacing = unit(0, "line"),
-    strip.text= element_blank(),
-    panel.border = element_rect(fill = "transparent", size = .2)
-   )
+theta_plots <- scores_contours(theta_fit, plot_opts)
+theta_plots$grouped
 
 ## ---- plot-beta ----
-beta_fit <- melt(
-  fit$beta,
-  varnames = c("iteration", "v", "k")
-) %>%
-  left_join(
-    melt(
-      beta,
-      varnames = c("v", "k"),
-      value.name = "truth"
-    )
-  )
+beta_fit <- reshape_samples(fit$beta, beta, c("v", "k"))
 
-beta_fit$i <- factor(
-  beta_fit$i,
-  levels = order(beta[, 1])
-)
-
-beta_fit_cast <- beta_fit %>%
-  data.table::setDT() %>%
-  data.table::dcast(v + iteration ~ k, value.var = c("value", "truth"))
-
-p <- ggplot() +
-  stat_density2d(
-    data = beta_fit_cast,
-    aes(x = value_2, y = value_1, group = as.factor(v), fill = log(..level..)),
-    geom = "polygon", alpha = 0.05, h = 0.4, bins = 40
-  ) +
-  geom_text(
-    data = beta_fit_cast %>%
-      group_by(v) %>%
-      summarise(mean_1 = mean(value_2), mean_2 = mean(value_1)),
-    aes(x = mean_1, y = mean_2, label = v),
-    col = "#e34a33",
-    size = 1.3
-  ) +
-  geom_text(
-    data = beta_fit_cast %>% filter(iteration == 1),
-    aes(x = truth_1, y = truth_2, label = v),
-    size = 1.3
-  ) +
-  xlim(0, 6.5) +
-  ylim(0, 7) +
-  guides(fill = guide_legend(keywidth = 0.4, keyheight = 0.8, override.aes = list(alpha = 1))) +
-  theme(
-    axis.text = element_blank(),
-    panel.spacing = unit(0, "line")
-  ) +
-  coord_fixed() +
-  scale_fill_gradientn(colours = viridis(256, option = "D"), breaks = -3:0)
-p
-
-## ---- beta-facet ----
-p +
-  theme(
-    axis.text = element_blank(),
-    panel.spacing = unit(0, "line"),
-    strip.text= element_blank(),
-    panel.border = element_rect(fill = "transparent", size = .2)
-  )
+plot_opts$group <- "v"
+beta_plots <- scores_contours(beta_fit, plot_opts)
+beta_plots$grouped
