@@ -8,34 +8,15 @@
 ## ---- libraries ----
 library("plyr")
 library("dplyr")
+library("data.table")
 library("reshape2")
 library("ggplot2")
+library("ggscaffold")
 library("rstan")
+source("./nmf_utils.R")
 rstan_options(auto_write = TRUE)
 options(mc.cores = parallel::detectCores())
 set.seed(01082017)
-
-scale_colour_discrete <- function(...)
-  scale_colour_brewer(..., palette="Set2")
-scale_fill_discrete <- function(...)
-  scale_fill_brewer(..., palette="Set2")
-scale_fill_continuous <- function(...)
-  scale_fill_gradient(low = "white", high = "#C36395")
-
-theme_set(theme_bw())
-min_theme <- theme_update(
-  panel.border = element_blank(),
-  panel.grid = element_blank(),
-  text = element_text(family = "Ubuntu Regular", color = "#22211d"),
-  axis.ticks = element_blank(),
-  legend.title = element_text(size = 8),
-  legend.text = element_text(size = 6),
-  axis.text = element_text(size = 6),
-  axis.title = element_text(size = 8),
-  strip.background = element_blank(),
-  strip.text = element_text(size = 8),
-  legend.key = element_blank()
-)
 
 ## ---- simulate ----
 stan_data <- list(
@@ -80,12 +61,19 @@ mask <- matrix(
 y[mask == 1] <- 0
 
 ## ---- heatmap ----
-y_df <- melt(y)
-y_df$Var1 <- factor(y_df$Var1, levels = order(theta[, 1]))
-y_df$Var2 <- factor(y_df$Var2, levels = order(beta[, 1]))
-ggplot(y_df) +
-  geom_tile(aes(x = Var1, y = Var2, fill = value)) +
-  scale_fill_gradient(low = "white", high = "#C36395")
+y_df <- y %>%
+  melt(
+    varnames = c("row", "col"),
+    value.name = "fill"
+  )
+plot_opts <- list(
+  "x" = "row",
+  "y" = "col",
+  "x_order" = order(theta[, 1]),
+  "y_order" = order(beta[, 1])
+)
+
+ggheatmap(y_df, plot_opts)
 
 ## ---- pca ----
 compare_data <- data.frame(
@@ -93,6 +81,7 @@ compare_data <- data.frame(
   princomp(scale(y))$scores
 )
 
+theme_set(min_theme())
 ggplot(compare_data) +
   geom_point(aes(x = Comp.1, Comp.2, size = X1, col = X2))
 
@@ -107,12 +96,6 @@ ggplot(qq_df) +
   geom_histogram(aes(x = y), binwidth = .5) +
   facet_grid(label ~ .)
 
-## ---- stan-fit ----
-fit <- extract(
-  stan(file = "nmf_gamma_poisson_zero.stan", data = stan_data, chains = 1)
-)
-save(fit, file = "nmf_zero.rda")
-
 ggplot(data.frame(
   mu = rowMeans(y),
   sigma = apply(y, 1, sd)
@@ -122,6 +105,12 @@ ggplot(data.frame(
   ) +
   coord_fixed() +
   geom_abline(slope = 1)
+
+## ---- stan-fit ----
+fit <- extract(
+  stan(file = "nmf_gamma_poisson_zero.stan", data = stan_data, chains = 1)
+)
+save(fit, file = "nmf_zero.rda")
 
 ## ---- examine ----
 theta_fit <- melt(
