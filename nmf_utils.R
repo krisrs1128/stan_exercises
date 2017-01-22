@@ -83,3 +83,30 @@ reshape_samples <- function(samples, truth, dims) {
       value.var = c("value", "truth")
   )
 }
+
+merge_nmf_opts <- function(opts = list()) {
+  default_opts <- list(
+    "K" = 2,
+    "N" = 100,
+    "P" = 75,
+    "a" = 1,
+    "b" = 1,
+    "c" = 1,
+    "d" = 1,
+    "zero_inf_prob" = 0
+  )
+  modifyList(default_opts, opts)
+}
+
+#' Simulate NMF Data (optionally zero inflated)
+#'
+#' To facilitate simulation across many parameters, it's useful to have a single
+#' function to generate all the quantities of interest.
+#'
+#' @param sim_opts [list] A list containing parameters for simulation. Any
+#'   options that are not specified will be filled in with defaults, according
+#'   to merge_nmf_defaults().
+#' @return A list with the latent thetas, betas, mask, and observed Y.
+nmf_sim <- function(sim_opts) {
+  opts <- merge_nmf_opts(opts)
+}
