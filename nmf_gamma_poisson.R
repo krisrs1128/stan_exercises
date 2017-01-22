@@ -67,6 +67,7 @@ compare_data <- data.frame(
   princomp(scale(y))$scores
 )
 
+theme_set(min_theme())
 ggplot(compare_data) +
   geom_point(aes(x = Comp.1, Comp.2, size = X1, col = X2))
 
@@ -119,12 +120,17 @@ theta_fit_cast <- theta_fit %>%
   data.table::setDT() %>%
   data.table::dcast(i + iteration ~ k, value.var = c("value", "truth"))
 
-p <- ggplot() +
-  stat_density2d(
-    data = theta_fit_cast,
-    aes(x = value_1, y = value_2, group = as.factor(i), fill = log(..level..)),
-    geom = "polygon", alpha = 0.05, h = 0.4, bins = 40
-  ) +
+plot_opts <- list(
+  "x" = "value_1",
+  "y" = "value_2",
+  "fill" = "log(..level..)",
+  "fill_type" = "gradient",
+  "group" = "as.factor(i)",
+  "alpha" = 0.1,
+  "h" = 0.3
+)
+
+p <- ggcontours(theta_fit_cast, plot_opts) +
   geom_text(
     data = theta_fit_cast %>%
       group_by(i) %>%
@@ -138,24 +144,13 @@ p <- ggplot() +
     aes(x = truth_1, y = truth_2, label = i),
     size = 1.3
   ) +
-  xlim(0, 6) +
-  ylim(0, 8) +
-  guides(fill = guide_legend(keywidth = 0.4, keyheight = 0.8, override.aes = list(alpha = 1))) +
-  theme(
-    axis.text = element_blank(),
-    panel.spacing = unit(0, "line")
-  ) +
-  coord_fixed() +
-  scale_fill_gradientn(colours = viridis(256, option = "D"), breaks = -3:0)
-p
+  scale_x_continuous(limits = c(0, 6)) +
+  scale_y_continuous(limits = c(0, 8))
 
 ## ---- faceted-thetas ----
 p +
   facet_wrap(~i) +
   theme(
-    axis.text = element_blank(),
-    panel.spacing = unit(0, "line"),
-    strip.text= element_blank(),
     panel.border = element_rect(fill = "transparent", size = .2)
   )
 
