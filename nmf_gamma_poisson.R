@@ -99,6 +99,17 @@ fit <- extract(
 save(fit, file = "nmf.rda")
 
 ## --- plot-utils ---
+#' Plot Contours and Associated Coordinate
+#'
+#' This is a wrapper of ggcontours in the ggscaffold package that shows the
+#' coordinate associated with point clouds.
+#'
+#' @param plot_data [data.frame] The data frame that contains the sampled
+#'   coordinates for the contours, along with the true positions (which will be
+#'   indicated with text).
+#' @param plot_opts [list] A list specifying plotting appearance. Pretty much
+#'   the same as the usual ggcontours plot_opts, except an extra option for plot
+#'   limits.
 scores_contours <- function(plot_data, plot_opts) {
   p1 <- ggcontours(plot_data, plot_opts) +
     geom_text(
