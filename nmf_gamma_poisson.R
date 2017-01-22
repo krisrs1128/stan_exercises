@@ -98,6 +98,29 @@ fit <- extract(
 )
 save(fit, file = "nmf.rda")
 
+## --- plot-utils ---
+scores_contours <- function(plot_data, plot_opts) {
+  p1 <- ggcontours(plot_data, plot_opts) +
+    geom_text(
+      data = plot_data %>%
+        group_by_(plot_opts$group) %>%
+        summarise(mean_1 = mean(value_1), mean_2 = mean(value_2)),
+      aes_string(x = "mean_1", y = "mean_2", label = plot_opts$group),
+      col = plot_opts$mean_col,
+      size = plot_opts$text_size
+    ) +
+    geom_text(
+      data = plot_data %>% filter(iteration == 1),
+      aes_string(x = "truth_1", y = "truth_2", label = plot_opts$group),
+      size = plot_opts$text_size
+    ) +
+    scale_x_continuous(limits = plot_opts$x_lim, expand = c(0, 0)) +
+    scale_y_continuous(limits = plot_opts$y_lim, expand = c(0, 0))
+  p2 <- p1 +
+    facet_wrap(formula(paste0("~", plot_opts$group)))
+  list("grouped" = p1, "coordinates" = p2)
+}
+
 ## ---- examine ----
 theta_fit <- melt(
   fit$theta,
@@ -125,34 +148,17 @@ plot_opts <- list(
   "y" = "value_2",
   "fill" = "log(..level..)",
   "fill_type" = "gradient",
-  "group" = "as.factor(i)",
-  "alpha" = 0.1,
-  "h" = 0.3
+  "group" = "i",
+  "alpha" = 0.05,
+  "h" = 0.3,
+  "mean_col" = "#e34a33",
+  "x_lim" = c(0, 6),
+  "y_lim" = c(0, 8),
+  "text_size" = 2,
+  "panel_border" = 0.2
 )
 
-p <- ggcontours(theta_fit_cast, plot_opts) +
-  geom_text(
-    data = theta_fit_cast %>%
-      group_by(i) %>%
-      summarise(mean_1 = mean(value_1), mean_2 = mean(value_2)),
-    aes(x = mean_1, y = mean_2, label = i),
-    col = "#e34a33",
-    size = 1.3
-  ) +
-  geom_text(
-    data = theta_fit_cast %>% filter(iteration == 1),
-    aes(x = truth_1, y = truth_2, label = i),
-    size = 1.3
-  ) +
-  scale_x_continuous(limits = c(0, 6)) +
-  scale_y_continuous(limits = c(0, 8))
-
-## ---- faceted-thetas ----
-p +
-  facet_wrap(~i) +
-  theme(
-    panel.border = element_rect(fill = "transparent", size = .2)
-  )
+scores_contours(theta_fit_cast, plot_opts)
 
 ## ---- plot-beta ----
 beta_fit <- melt(
@@ -176,41 +182,6 @@ beta_fit_cast <- beta_fit %>%
   data.table::setDT() %>%
   data.table::dcast(v + iteration ~ k, value.var = c("value", "truth"))
 
-p <- ggplot() +
-  stat_density2d(
-    data = beta_fit_cast,
-    aes(x = value_2, y = value_1, group = as.factor(v), fill = log(..level..)),
-    geom = "polygon", alpha = 0.05, h = 0.4, bins = 40
-  ) +
-  geom_text(
-    data = beta_fit_cast %>%
-      group_by(v) %>%
-      summarise(mean_1 = mean(value_2), mean_2 = mean(value_1)),
-    aes(x = mean_1, y = mean_2, label = v),
-    col = "#e34a33",
-    size = 1.3
-  ) +
-  geom_text(
-    data = beta_fit_cast %>% filter(iteration == 1),
-    aes(x = truth_1, y = truth_2, label = v),
-    size = 1.3
-  ) +
-  xlim(0, 6.5) +
-  ylim(0, 7) +
-  guides(fill = guide_legend(keywidth = 0.4, keyheight = 0.8, override.aes = list(alpha = 1))) +
-  theme(
-    axis.text = element_blank(),
-    panel.spacing = unit(0, "line")
-  ) +
-  coord_fixed() +
-  scale_fill_gradientn(colours = viridis(256, option = "D"), breaks = -3:0)
-p
-
-## ---- beta-facet ----
-p +
-  theme(
-    axis.text = element_blank(),
-    panel.spacing = unit(0, "line"),
-    strip.text= element_blank(),
-    panel.border = element_rect(fill = "transparent", size = .2)
-  )
+plot_opts$group <- "v"
+beta_plots <- scores_contours(beta_fit_cast, plot_opts)
+beta_plots$grouped
