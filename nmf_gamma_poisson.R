@@ -19,34 +19,10 @@ options(mc.cores = parallel::detectCores())
 set.seed(01112017)
 
 ## ---- simulate ----
-stan_data <- list(
-  K = 2,
-  N = 100,
-  P = 75,
-  a = 1,
-  b = 1,
-  c = 1,
-  d = 1
-)
-attach(stan_data)
-
-## scores
-theta <- matrix(
-  rgamma(N * K, rate = a, shape = b),
-  N, K
-)
-
-## factors
-beta <- matrix(
-  rgamma(P * K, rate = a, shape = b),
-  P, K
-)
-
-## observations
-y <- matrix(
-  rpois(N * P, theta %*% t(beta)),
-  N, P
-)
+sim_data <- nmf_sim()
+y <- sim_data$y
+theta <- sim_data$theta
+beta <- sim_data$beta
 
 ## ---- heatmap ----
 y_df <- y %>%
@@ -99,7 +75,6 @@ fit <- extract(
   stan(file = "nmf_gamma_poisson.stan", data = stan_data, chains = 1)
 )
 save(fit, file = "nmf.rda")
-
 
 ## ---- examine ----
 theta_fit <- reshape_samples(fit$theta, theta, c("i", "k"))

@@ -19,46 +19,10 @@ options(mc.cores = parallel::detectCores())
 set.seed(01082017)
 
 ## ---- simulate ----
-stan_data <- list(
-  K = 2,
-  N = 100,
-  P = 75,
-  a = 1,
-  b = 1,
-  c = 1,
-  d = 1,
-  zero_inf_prob = 0.8
-)
-attach(stan_data)
-
-## scores
-theta <- matrix(
-  rgamma(N * K, rate = a, shape = b),
-  N, K
-)
-
-## factors
-beta <- matrix(
-  rgamma(P * K, rate = a, shape = b),
-  P, K
-)
-
-## observations
-y <- matrix(
-  rpois(N * P, theta %*% t(beta)),
-  N, P
-)
-
-## set some proportion to zero
-mask <- matrix(
-  sample(
-    c(0, 1),
-    N * P,
-    replace = T,
-    prob = c(stan_data$zero_inf_prob, 1 - stan_data$zero_inf_prob)),
-  N, P
-)
-y[mask == 1] <- 0
+sim_data <- nmf_sim(list(zero_inf_prob = 0.8))
+y <- sim_data$y
+theta <- sim_data$theta
+beta <- sim_data$beta
 
 ## ---- heatmap ----
 y_df <- y %>%
