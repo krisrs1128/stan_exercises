@@ -11,31 +11,10 @@ library("dplyr")
 library("reshape2")
 library("ggplot2")
 library("rstan")
+library("ggscaffold")
 rstan_options(auto_write = TRUE)
 options(mc.cores = parallel::detectCores())
 set.seed(01112017)
-
-scale_colour_discrete <- function(...)
-  scale_colour_brewer(..., palette="Set2")
-scale_fill_discrete <- function(...)
-  scale_fill_brewer(..., palette="Set2")
-scale_fill_continuous <- function(...)
-  scale_fill_gradient(low = "white", high = "#C36395")
-
-theme_set(theme_bw())
-min_theme <- theme_update(
-  panel.border = element_blank(),
-  panel.grid = element_blank(),
-  text = element_text(family = "Ubuntu Regular", color = "#22211d"),
-  axis.ticks = element_blank(),
-  legend.title = element_text(size = 8),
-  legend.text = element_text(size = 6),
-  axis.text = element_text(size = 6),
-  axis.title = element_text(size = 8),
-  strip.background = element_blank(),
-  strip.text = element_text(size = 8),
-  legend.key = element_blank()
-)
 
 ## ---- simulate ----
 stan_data <- list(
@@ -68,12 +47,19 @@ y <- matrix(
 )
 
 ## ---- heatmap ----
-y_df <- melt(y)
-y_df$Var1 <- factor(y_df$Var1, levels = order(theta[, 1]))
-y_df$Var2 <- factor(y_df$Var2, levels = order(beta[, 1]))
-ggplot(y_df) +
-  geom_tile(aes(x = Var1, y = Var2, fill = value)) +
-  scale_fill_gradient(low = "white", high = "#C36395")
+y_df <- y %>%
+  melt(
+    varnames = c("row", "col"),
+    value.name = "fill"
+  )
+plot_opts <- list(
+  "x" = "row",
+  "y" = "col",
+  "x_order" = order(theta[, 1]),
+  "y_order" = order(beta[, 1])
+)
+
+ggheatmap(y_df, plot_opts)
 
 ## ---- pca ----
 compare_data <- data.frame(
